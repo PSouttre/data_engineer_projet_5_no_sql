@@ -38,3 +38,19 @@ La migration est conçue de manière défensive pour garantir que seules des don
    `pytest test_pre_migration.py -v`
 Messages d'erreur à voir dans le terminal.
 
+2. **Script de Migration ETL (`migration.py`)**
+Ce script effectue le transfert des données validées vers MongoDB via `pymongo`. 
+Voici la logique métier appliquée :
+
+- **Extract :** Lecture du fichier CSV source via le moteur Pandas.
+- **Transform (Typage BSON) :** Les colonnes `Date of Admission` et `Discharge Date` (initialement de type texte) sont explicitement converties en objets `datetime` Python. Cela garantit que MongoDB les enregistrera au format natif `ISODate`, ce qui est indispensable pour de futures requêtes temporelles. 
+Les données numériques (`Age`, `Billing Amount`) sont conservées pour matcher avec les types `Int32/Int64` et `Double` en MongoDB.
+- **Load :** Pour assurer l'idempotence du script (pouvoir le relancer sans dupliquer les données), la collection est purgée au démarrage. L'insertion est ensuite réalisée en masse via la méthode `insert_many()` pour des performances optimales.
+- **Indexation :** Création d'index sur les champs `Medical Condition` (ordre croissant) et `Date of Admission` (ordre décroissant) afin de réduire la complexité temporelle et d'accélérer drastiquement les requêtes de lecture ciblant ces champs métiers clés.
+
+*Pour lancer la migration manuellement :*
+`python migration.py`
+
+*Pour visualiser la base de données sur MogoDB Compass*
+`mongodb://localhost:27017/`
+
