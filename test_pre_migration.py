@@ -3,7 +3,7 @@ import pandas as pd
 
 # --- CONFIGURATION ---
 # Chemin vers le fichier de données
-CHEMIN_CSV = "../projet_5_donnees/healthcare_dataset.csv"
+CHEMIN_CSV = "../../projet_5_donnees/healthcare_dataset.csv"
 
 # Colonnes du dataset de départ
 COLONNES_ATTENDUES = ['Name', 'Age', 'Gender', 'Blood Type', 'Medical Condition',
@@ -15,10 +15,12 @@ COLONNES_ATTENDUES = ['Name', 'Age', 'Gender', 'Blood Type', 'Medical Condition'
 @pytest.fixture(scope="module")
 def dataset():
     """
-    Charge le CSV une seule fois pour tout le module de test.
-    Tous les tests utiliseront ce  DataFrame.
+    Charge le CSV une seule fois pour tout le module de test et simule le nettoyage qui sera fait lors de la migration.
+    Tous les tests utiliseront ce DataFrame.
     """
     df = pd.read_csv(CHEMIN_CSV)
+    # Suppression des doublons
+    df = df.drop_duplicates()
     return df
 
 # --- TESTS D'INTÉGRITÉ ---
@@ -57,7 +59,8 @@ def test_types_variables(dataset):
     colonnes_texte = ['Name', 'Gender', 'Blood Type', 'Medical Condition','Doctor', 'Hospital', 'Insurance Provider',
        'Admission Type', 'Medication', 'Test Results']
     for col in colonnes_texte:
-        assert pd.api.types.is_object_dtype(dataset[col]), f"ERREUR DE TYPE : le contenu de {col} doit être du texte."
+        assert pd.api.types.is_object_dtype(dataset[col]) or pd.api.types.is_string_dtype(dataset[col]),\
+            f"ERREUR DE TYPE : le contenu de {col} doit être du texte."
 
 
 

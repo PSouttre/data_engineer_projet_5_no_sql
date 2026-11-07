@@ -15,6 +15,9 @@ def run_migration():
     # Extraction
     print(f"Lecture du fichier {CHEMIN_CSV}...")
     df = pd.read_csv(CHEMIN_CSV)
+    # Nettoyage des doublons
+    print("Suppression des doublons...")
+    df = df.drop_duplicates()
 
     # Transformation
     # Conversion des chaînes de caractères en objets datetime (format BSON ISODate)
