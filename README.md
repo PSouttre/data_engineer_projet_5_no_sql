@@ -55,7 +55,7 @@ Voici la logique métier appliquée :
 `mongodb://localhost:27017/`
 
 3. **Pipeline d'automatisation (`pipeline.py`)**
-Le script lance les tests d'intégrité en sous-processus isolés. 
+Le script lance les tests d'intégrité en sous-processus isolés avant et après la migration. 
 La migration (`migration.py`) n'est déclenchée que si et seulement si les tests réussissent avec un code de retour égal à 0.
 *Pour exécuter l'ensemble du pipeline automatisé :*
 `python pipeline.py`

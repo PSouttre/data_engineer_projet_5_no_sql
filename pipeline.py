@@ -24,11 +24,20 @@ def run_pipeline():
     result_migration = subprocess.run([sys.executable, "migration.py"])
 
     if result_migration.returncode == 0:
-        print("\nPipeline exécuté et terminé avec succès !")
+        print("\nMigration terminée !")
     else:
         print("\nERREUR lors de l'exécution de la migration.")
         sys.exit(1)
 
+    # Validation : Tests post-migration
+    print("\n Étape 3 : Lancement des tests post-migration (pytest)...")
+    result_post_tests = subprocess.run([sys.executable, "-m", "pytest", "test_post_migration.py", "-v"])
 
+    if result_post_tests.returncode == 0:
+        print("\n Pipeline exécuté et validé avec succès !")
+    else:
+        print("\n ERREUR : Les tests post-migration ont échoué")
+        sys.exit(1)
+        
 if __name__ == "__main__":
     run_pipeline()
