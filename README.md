@@ -22,12 +22,13 @@ Le projet nécessite Python 3 et une instance de MongoDB Community Server tourna
 4. Installer les dépendances strictes :
    `pip install -r requirements.txt`
 
-## Logique de la migration et qualité des données
+## Architecture ETL et qualité des données
 
 La migration est conçue de manière défensive pour garantir que seules des données propres sont insérées en base.
 
 1. **Tests Pré-migration (`test_pre_migration.py`) :** 
-   Avant toute manipulation, le fichier CSV source est audité via le framework `pytest` et `pandas`. Les tests vérifient automatiquement :
+   Avant toute manipulation, le fichier CSV source est audité via le framework `pytest` et `pandas`. 
+Les tests vérifient automatiquement :
    - La présence des colonnes obligatoires.
    - L'absence de valeurs manquantes (NaN/Null).
    - La conformité du typage des variables (ex: numériques, dates).
@@ -43,10 +44,9 @@ Ce script effectue le transfert des données validées vers MongoDB via `pymongo
 Voici la logique métier appliquée :
 
 - **Extract :** Lecture du fichier CSV source via le moteur Pandas.
-- **Transform (Typage BSON) :** Les colonnes `Date of Admission` et `Discharge Date` (initialement de type texte) sont explicitement converties en objets `datetime` Python. Cela garantit que MongoDB les enregistrera au format natif `ISODate`, ce qui est indispensable pour de futures requêtes temporelles. 
-Les données numériques (`Age`, `Billing Amount`) sont conservées pour matcher avec les types `Int32/Int64` et `Double` en MongoDB.
-- **Load :** Pour assurer l'idempotence du script (pouvoir le relancer sans dupliquer les données), la collection est purgée au démarrage. L'insertion est ensuite réalisée en masse via la méthode `insert_many()` pour des performances optimales.
-- **Indexation :** Création d'index sur les champs `Medical Condition` (ordre croissant) et `Date of Admission` (ordre décroissant) afin de réduire la complexité temporelle et d'accélérer drastiquement les requêtes de lecture ciblant ces champs métiers clés.
+- **Transform (Nettoyage et typage BSON) :** Suppression des doublons et transformation des dates en datetime. 
+- **Load :** La collection est purgée au démarrage ('drop') pour éviter l'insertion en double. L'insertion est ensuite réalisée en masse via la méthode `insert_many()` pour des performances optimales.
+- **Indexation :** Création d'index sur les champs `Medical Condition` (ordre croissant) et `Date of Admission` (ordre décroissant) pour améliorer la vitesse des requêtes.
 
 *Pour lancer la migration manuellement :*
 `python migration.py`
@@ -54,3 +54,30 @@ Les données numériques (`Age`, `Billing Amount`) sont conservées pour matcher
 *Pour visualiser la base de données sur MogoDB Compass*
 `mongodb://localhost:27017/`
 
+3. **Pipeline d'automatisation (`pipeline.py`)**
+Le script lance les tests d'intégrité en sous-processus isolés. 
+La migration (`migration.py`) n'est déclenchée que si et seulement si les tests réussissent avec un code de retour égal à 0.
+*Pour exécuter l'ensemble du pipeline automatisé :*
+`python pipeline.py`
+
+## Opérations CRUD(`crud.py`)
+Script pour montrer la manipulation d'un document.
+*  **Create :** Insertion d'un nouveau document patient (`insert_one`).
+*  **Read :** Recherche du patient via un critère spécifique (`find_one`).
+* **Update :** Mise à jour du diagnostic et de la facturation avec l'opérateur de modification ciblé `$set` (`update_one`).
+* **Delete :** Suppression définitive du document pour nettoyer la base de test (`delete_one`).
+
+*Pour lancer la démonstration CRUD :*
+`python crud.py`
+
+## Sauvegarde et restauration
+*  **Exportation (Backup) :** Sauvegarde complète de la collection au format JSON en préservant le typage strict BSON.
+
+    ```bash
+    mongoexport --db=healthcare_db --collection=patients --out=backup_patients.json --jsonArray
+    ```
+*   **Importation (Restauration) :** Réinjection des données depuis un fichier de sauvegarde vers une nouvelle collection ou base de données.
+    ```bash
+    mongoimport --db=healthcare_db --collection=patients_restaures --file=backup_patients.json --jsonArray
+    ```
+    

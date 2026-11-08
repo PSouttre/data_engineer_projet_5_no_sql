@@ -20,7 +20,8 @@ def run_pipeline():
 
     # Chargement : Exécution de la migration
     print("\nÉtape 2 : Lancement de la migration MongoDB...")
-    result_migration = subprocess.run(["python", "migration.py"])
+    # On utilise sys.executable à la place de python pour garantir l'usage du venv
+    result_migration = subprocess.run([sys.executable, "migration.py"])
 
     if result_migration.returncode == 0:
         print("\nPipeline exécuté et terminé avec succès !")
