@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8' # avertissement : the attribute version is obsolete, it will be ignored
 
 services:
   # 1er Conteneur : La base de données MongoDB
@@ -6,9 +6,12 @@ services:
     image: mongo:latest
     container_name: mongodb_projet5
     ports:
-      - "27017:27017" # Relie le port 27017 du conteneur du PC
+      - "127.0.0.1:27017:27017" # Accessible uniquement depuis le PC, pas depuis le réseau  (adresse_IP_du_PC : port_du_PC : port_du_conteneur)
     volumes:
       - mongodb_data:/data/db # Volume 1 : Stockage persistant de la base de données
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     restart: unless-stopped
 
   # 2ème Conteneur : Application Python (les scripts)
@@ -24,7 +27,7 @@ services:
       - .:/app
     environment:
       # On passe de nouvelles variables d'environnement au conteneur
-      - MONGO_URI=mongodb://mongodb:27017/
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/?authSource=admin  # l’image crée le compte root dans la base admin.
       - CSV_PATH=/donnees_csv/healthcare_dataset.csv
 
 # Déclaration du volume persistant pour MongoDB
