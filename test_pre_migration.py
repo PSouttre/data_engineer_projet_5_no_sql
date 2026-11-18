@@ -1,10 +1,9 @@
+
 import pytest
 import pandas as pd
+from migration import charger_csv, nettoyer_donnees, CHEMIN_CSV
 
 # --- CONFIGURATION ---
-# Chemin vers le fichier de données
-CHEMIN_CSV = "../../projet_5_donnees/healthcare_dataset.csv"
-
 # Colonnes du dataset de départ
 COLONNES_ATTENDUES = ['Name', 'Age', 'Gender', 'Blood Type', 'Medical Condition',
        'Date of Admission', 'Doctor', 'Hospital', 'Insurance Provider',
@@ -15,12 +14,11 @@ COLONNES_ATTENDUES = ['Name', 'Age', 'Gender', 'Blood Type', 'Medical Condition'
 @pytest.fixture(scope="module")
 def dataset():
     """
-    Charge le CSV une seule fois pour tout le module de test et simule le nettoyage qui sera fait lors de la migration.
+    Charge le CSV une seule fois pour tout le module de test et applique le même nettoyage que la migration (fonctions importées de migration.py.
     Tous les tests utiliseront ce DataFrame.
     """
-    df = pd.read_csv(CHEMIN_CSV)
-    # Suppression des doublons
-    df = df.drop_duplicates()
+    df = charger_csv(chemin=CHEMIN_CSV)
+    df = nettoyer_donnees(df)
     return df
 
 # --- TESTS D'INTÉGRITÉ ---

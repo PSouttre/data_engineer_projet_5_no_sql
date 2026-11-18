@@ -1,42 +1,31 @@
 import pytest
-import pandas as pd
-from pymongo import MongoClient
 import datetime
+from migration import  charger_csv, nettoyer_donnees, connecter_mongodb,CHEMIN_CSV, URI_MONGODB
 
 # --- CONFIGURATION ---
-URI_MONGODB = "mongodb://localhost:27017/"
 NOM_DB = "healthcare_db"
 NOM_COLLECTION = "patients"
-CHEMIN_CSV = "../../projet_5_donnees/healthcare_dataset.csv"
-
 
 # --- FIXTURES ---
-
 @pytest.fixture(scope="module")
 def db_collection():
     """Établit la connexion à MongoDB et retourne la collection cible."""
-    client = MongoClient(URI_MONGODB)
-    db = client[NOM_DB]
-    collection = db[NOM_COLLECTION]
-    yield collection
+    client, collection = connecter_mongodb(URI_MONGODB)
+    yield collection # La valeur après yield est donnée aux tests (la collection). Ce qui est après le yield s’exécute une fois tous les tests finis (fermeture de la connexion).
     client.close()
-
 
 @pytest.fixture(scope="module")
 def total_attendu():
     """Calcule le nombre de lignes attendues après nettoyage du CSV."""
-    df = pd.read_csv(CHEMIN_CSV)
-    df = df.drop_duplicates()
+    df = charger_csv(chemin=CHEMIN_CSV)
+    df = nettoyer_donnees(df)
     return len(df)
 
-
 # --- TESTS POST-MIGRATION ---
-
 def test_volumetrie_documents(db_collection, total_attendu):
     """Vérifie que le nombre de documents en base correspond au nombre de lignes nettoyées."""
     total_mongodb = db_collection.count_documents({})
     assert total_mongodb == total_attendu, f"ERREUR VOLUMÉTRIE : Nombre de documents attendu {total_attendu}, mais nombre trouvé {total_mongodb}."
-
 
 def test_types_donnees_mongodb(db_collection):
     """Vérifie l'intégrité des types BSON sur un échantillon de documents."""
@@ -55,7 +44,6 @@ def test_types_donnees_mongodb(db_collection):
     # Vérification que le montant de la facture est un nombre (idéalement float)
     assert isinstance(doc_sample.get("Billing Amount"),
                       (int, float)), "ERREUR DE TYPE : 'Billing Amount' n'est pas un format numérique."
-
 
 def test_presence_index(db_collection):
     """Vérifie que les index pertinents ont bien été créés."""
