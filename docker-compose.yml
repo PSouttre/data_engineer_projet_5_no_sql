@@ -1,4 +1,3 @@
-#version: '3.8' # avertissement : the attribute version is obsolete, it will be ignored
 
 services:
   # 1er Conteneur : La base de données MongoDB
@@ -9,9 +8,17 @@ services:
       - "127.0.0.1:27017:27017" # Accessible uniquement depuis le PC, pas depuis le réseau  (adresse_IP_du_PC : port_du_PC : port_du_conteneur)
     volumes:
       - mongodb_data:/data/db # Volume 1 : Stockage persistant de la base de données
+      # Scripts exécutés au 1er démarrage : création des comptes (ro = lecture seule)
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      # Variables lues par mongo-init/01-creation-utilisateurs.js
+      MONGO_DB: ${MONGO_DB}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGO_ANALYSTE_USER: ${MONGO_ANALYSTE_USER}
+      MONGO_ANALYSTE_PASSWORD: ${MONGO_ANALYSTE_PASSWORD}
     restart: unless-stopped
 
   # 2ème Conteneur : Application Python (les scripts)
@@ -27,7 +34,7 @@ services:
       - .:/app
     environment:
       # On passe de nouvelles variables d'environnement au conteneur
-      - MONGO_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/?authSource=admin  # l’image crée le compte root dans la base admin.
+      - MONGO_URI=mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=${MONGO_DB}
       - CSV_PATH=/donnees_csv/healthcare_dataset.csv
 
 # Déclaration du volume persistant pour MongoDB
