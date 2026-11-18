@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # 1er Conteneur : La base de données MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_projet5
+    ports:
+      - "27017:27017" # Relie le port 27017 du conteneur du PC
+    volumes:
+      - mongodb_data:/data/db # Volume 1 : Stockage persistant de la base de données
+    restart: unless-stopped
+
+  # 2ème Conteneur : Application Python (les scripts)
+  python_app:
+    build: .
+    container_name: python_etl_projet5
+    depends_on:
+      - mongodb
+    volumes:
+      # Volume 2 : Le CSV, monté depuis le PC vers le dossier /donnees_csv du conteneur
+      - ../../projet_5_donnees:/donnees_csv
+      # Volume 3 : On synchronise les scripts Python dans le conteneur
+      - .:/app
+    environment:
+      # On passe de nouvelles variables d'environnement au conteneur
+      - MONGO_URI=mongodb://mongodb:27017/
+      - CSV_PATH=/donnees_csv/healthcare_dataset.csv
+
+# Déclaration du volume persistant pour MongoDB
+volumes:
+  mongodb_data:
