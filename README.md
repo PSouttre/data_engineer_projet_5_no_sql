@@ -191,22 +191,21 @@ mongodb://analyste:MOT_DE_PASSE@localhost:27017/healthcare_db?authSource=healthc
 
 ## Sauvegarde et restauration
 
-Les outils `mongoexport` et `mongoimport` sont lancés dans le conteneur MongoDB. L'option `-p` sans valeur demande le mot de passe de façon masquée.
+Les outils `mongoexport` et `mongoimport` sont lancés dans le conteneur MongoDB. Les identifiants sont lus dans les variables d'environnement du conteneur (issues du `.env`) : aucun mot de passe n'est saisi ni affiché.
 
 **Exportation (sauvegarde)** avec le compte analyste, la lecture suffit :
 ```bash
-docker compose exec mongodb mongoexport -u analyste -p --authenticationDatabase healthcare_db --db healthcare_db --collection patients --jsonArray --out /tmp/backup_patients.json
+docker compose exec mongodb sh -c 'mongoexport -u "$MONGO_ANALYSTE_USER" -p "$MONGO_ANALYSTE_PASSWORD" --authenticationDatabase "$MONGO_DB" --db "$MONGO_DB" --collection patients --jsonArray --out /tmp/backup_patients.json'
 docker cp mongodb_projet5:/tmp/backup_patients.json ./backup_patients.json
 ```
 
 **Importation (restauration)** dans une nouvelle collection, avec le compte application (droits d'écriture nécessaires) :
 ```bash
 docker cp ./backup_patients.json mongodb_projet5:/tmp/backup_patients.json
-docker compose exec mongodb mongoimport -u app_etl -p --authenticationDatabase healthcare_db --db healthcare_db --collection patients_restaures --jsonArray --file /tmp/backup_patients.json
+docker compose exec mongodb sh -c 'mongoimport -u "$MONGO_APP_USER" -p "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_DB" --db "$MONGO_DB" --collection patients_restaures --jsonArray --file /tmp/backup_patients.json'
 ```
 
 Le format JSON étendu de `mongoexport` conserve les types BSON (les dates restent au format `$date`). Le fichier de sauvegarde contient des données patients : il est exclu du dépôt.
-
 ## Structure du projet
 
 ```
