@@ -1,8 +1,9 @@
+import os
 from pymongo import MongoClient
 from datetime import datetime
 
 # Connexion à la base de données
-URI_MONGODB = "mongodb://localhost:27017/"
+URI_MONGODB = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(URI_MONGODB)
 db = client["healthcare_db"]
 collection = db["patients"]

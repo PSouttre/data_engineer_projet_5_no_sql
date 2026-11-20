@@ -1,0 +1,47 @@
+
+services:
+  # 1er Conteneur : La base de données MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_projet5
+    ports:
+      - "127.0.0.1:27017:27017" # Accessible uniquement depuis le PC, pas depuis le réseau  (adresse_IP_du_PC : port_du_PC : port_du_conteneur)
+    volumes:
+      - mongodb_data:/data/db # Volume 1 : Stockage persistant de la base de données
+      # Scripts exécutés au 1er démarrage : création des comptes (ro = lecture seule)
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      # Variables lues par mongo-init/01-creation-utilisateurs.js
+      MONGO_DB: ${MONGO_DB}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGO_ANALYSTE_USER: ${MONGO_ANALYSTE_USER}
+      MONGO_ANALYSTE_PASSWORD: ${MONGO_ANALYSTE_PASSWORD}
+    restart: unless-stopped
+
+  # 2ème Conteneur : Application Python (les scripts)
+  python_app:
+    build: .
+    container_name: python_etl_projet5
+    depends_on:
+      - mongodb
+    volumes:
+      # Volume 2 : Le CSV, monté depuis le PC vers le dossier /donnees_csv du conteneur
+      - ../../projet_5_donnees:/donnees_csv
+      # Volume 3 : On synchronise les scripts Python dans le conteneur
+      - .:/app
+    environment:
+      # On passe de nouvelles variables d'environnement au conteneur
+      MONGO_URI: mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=${MONGO_DB}
+      CSV_PATH: /donnees_csv/healthcare_dataset.csv
+      # Utilisés uniquement par test_authentification.py pour vérifier les droits de chaque rôle
+      MONGO_HOST: mongodb
+      MONGO_DB: ${MONGO_DB}
+      MONGO_ANALYSTE_USER: ${MONGO_ANALYSTE_USER}
+      MONGO_ANALYSTE_PASSWORD: ${MONGO_ANALYSTE_PASSWORD}
+
+# Déclaration du volume persistant pour MongoDB
+volumes:
+  mongodb_data:
