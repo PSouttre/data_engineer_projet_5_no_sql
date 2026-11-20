@@ -19,6 +19,8 @@ services:
       MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
       MONGO_ANALYSTE_USER: ${MONGO_ANALYSTE_USER}
       MONGO_ANALYSTE_PASSWORD: ${MONGO_ANALYSTE_PASSWORD}
+    networks:
+      - reseau_projet5
     restart: unless-stopped
 
   # 2ème Conteneur : Application Python (les scripts)
@@ -41,7 +43,13 @@ services:
       MONGO_DB: ${MONGO_DB}
       MONGO_ANALYSTE_USER: ${MONGO_ANALYSTE_USER}
       MONGO_ANALYSTE_PASSWORD: ${MONGO_ANALYSTE_PASSWORD}
+    networks:
+      - reseau_projet5
 
 # Déclaration du volume persistant pour MongoDB
 volumes:
   mongodb_data:
+# Réseau
+networks:
+  reseau_projet5:
+    name: reseau_projet5
