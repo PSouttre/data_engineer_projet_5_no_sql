@@ -30,6 +30,7 @@ Dans ce projet :
 - Collection : `patients` (un document = une admission d'un patient)
 
 ## Architecture
+![Architecture des services Docker](docs/architecture_docker.png)
 
 Le fichier `docker-compose.yml` définit deux conteneurs :
 
@@ -38,9 +39,11 @@ Le fichier `docker-compose.yml` définit deux conteneurs :
 | `mongodb_projet5` | Serveur MongoDB avec authentification activée. Les données sont conservées dans un volume persistant (`mongodb_data`). |
 | `python_etl_projet5` | Environnement Python 3.12 (image construite à partir du `Dockerfile`) qui exécute les tests, la migration et le script CRUD. |
 
-Le conteneur Python communique avec MongoDB par le réseau interne de Docker (`mongodb:27017`), avec un compte dédié. Les identifiants sont lus dans un fichier `.env` qui n'est jamais versionné.
+Le conteneur Python communique avec MongoDB par le réseau Docker reseau_projet5 (`mongodb:27017`), avec un compte dédié. Les identifiants sont lus dans un fichier `.env` qui n'est jamais versionné.
 
 ## Pipeline ETL et qualité des données
+
+![Pipeline ETL](docs/pipeline_etl.png)
 
 La migration est conçue de manière défensive : seules des données validées sont insérées en base. Le script `pipeline.py` enchaîne trois étapes et s'arrête à la première erreur.
 
@@ -73,6 +76,8 @@ La migration est conçue de manière défensive : seules des données validées 
 
 ### Schéma d'un document
 
+![Schéma de la base de données](docs/schema_bdd.png)
+
 | Champ | Type BSON |
 |---|---|
 | `_id` | ObjectId (généré par MongoDB) |
@@ -84,6 +89,8 @@ La migration est conçue de manière défensive : seules des données validées 
 ## Authentification et rôles
 
 L'authentification MongoDB est activée : sans identifiants, aucune donnée n'est accessible. Chaque compte ne dispose que des droits nécessaires à son usage (principe du moindre privilège).
+
+![Rôles des utilisateurs MongoDB](docs/roles_utilisateurs.png)
 
 | Compte (variables du `.env`) | Rôle MongoDB | Périmètre | Usage |
 |---|---|---|---|
