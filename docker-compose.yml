@@ -36,6 +36,11 @@ services:
       # On passe de nouvelles variables d'environnement au conteneur
       - MONGO_URI=mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB}?authSource=${MONGO_DB}
       - CSV_PATH=/donnees_csv/healthcare_dataset.csv
+      # Utilisés uniquement par test_authentification.py pour vérifier les droits de chaque rôle
+      - MONGO_HOST=mongodb
+      - MONGO_DB=${MONGO_DB}
+      - MONGO_ANALYSTE_USER=${MONGO_ANALYSTE_USER}
+      - MONGO_ANALYSTE_PASSWORD=${MONGO_ANALYSTE_PASSWORD}
 
 # Déclaration du volume persistant pour MongoDB
 volumes:
