@@ -28,8 +28,8 @@ services:
     depends_on:
       - mongodb
     volumes:
-      # Volume 2 : Le CSV, monté depuis le PC vers le dossier /donnees_csv du conteneur
-      - ../../projet_5_donnees:/donnees_csv
+      # Volume 2 : Dossier du CSV sur le PC (CSV_DIR dans .env, ./data par défaut) monté dans /donnees_csv
+      - ${CSV_DIR:-./data}:/donnees_csv
       # Volume 3 : On synchronise les scripts Python dans le conteneur
       - .:/app
     environment:
